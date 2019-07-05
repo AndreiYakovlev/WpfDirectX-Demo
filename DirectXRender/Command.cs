@@ -7,7 +7,7 @@ using System.Windows.Input;
 
 namespace WpfApp1
 {
-    class Command : ICommand
+    public class Command : ICommand
     {
         private Action<object> _action;
         private Func<object, bool> _canExecute;

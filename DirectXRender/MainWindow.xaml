@@ -4,35 +4,107 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp1"
+        xmlns:sharpdx="clr-namespace:SharpDX.Direct3D9;assembly=SharpDX.Direct3D9"
+        xmlns:models="clr-namespace:WpfApp1.Models"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:i="clr-namespace:System.Windows.Interop;assembly=PresentationCore"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:System="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="DirectX Wpf Demo" Height="508" Width="742" FontFamily="Segoe UI Light"
+        Title="DirectX Wpf Demo" Height="500" Width="800" FontFamily="Segoe UI Light"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="None"
         AllowsTransparency="True" Background="Transparent" Topmost="True">
+
+    <Window.Resources>
+
+        <models:DirectXComponent x:Key="presentParameters"
+                                 BackBufferWidth="300"
+                                 BackBufferHeight="300" />
+
+        <ObjectDataProvider x:Key="dataFromEnum" MethodName="GetValues"
+                            ObjectType="{x:Type System:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="sharpdx:Format" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+
+        <ObjectDataProvider x:Key="multisampleEnum" MethodName="GetValues"
+                            ObjectType="{x:Type System:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="sharpdx:MultisampleType" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+
+        <Style x:Key="MyButton" TargetType="Button" BasedOn="{StaticResource MaterialDesignRaisedButton}">
+            <Setter Property="Background" Value="{x:Null}" />
+            <Setter Property="BorderBrush" Value="{x:Null}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="8" />
+            <Setter Property="Foreground" Value="DarkSlateGray" />
+        </Style>
+
+        <Style x:Key="myTextBox" TargetType="TextBox" BasedOn="{StaticResource MaterialDesignTextBox}">
+            <Setter Property="Margin" Value="8 0 8 8" />
+            <Setter Property="FontSize" Value="18" />
+        </Style>
+
+        <Style x:Key="myHeader" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="8 8 8 0" />
+        </Style>
+    </Window.Resources>
+
     <Border  Margin="8" Background="White">
         <Border.Effect>
             <DropShadowEffect Color="#FF999999" BlurRadius="8" ShadowDepth="2" Direction="270" />
         </Border.Effect>
 
-        <DockPanel>
-            <DockPanel DockPanel.Dock="Top" Background="White" MouseDown="StackPanel_MouseDown">
-                <Grid Background="#FB8122" HorizontalAlignment="Stretch" DockPanel.Dock="Top" Height="3"></Grid>
-                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" FlowDirection="RightToLeft">
-                    <Button Padding="0" Background="{x:Null}" BorderBrush="{x:Null}" HorizontalAlignment="Right" Width="32" Height="32" Margin="8"
-                    Command="{Binding CloseWindowCommand}"
-                     CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}">
+        <DockPanel Background="#333333">
+            <StackPanel DockPanel.Dock="Top" Background="White" MouseDown="StackPanel_MouseDown" Height="50">
+                <Grid Background="#FB8122" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="3"></Grid>
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Style="{StaticResource MyButton}" HorizontalAlignment="Right"
+                            Width="32" Height="32" Command="{Binding CloseWindowCommand}"
+                            CommandParameter="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}">
                         <materialDesign:PackIcon Kind="Close" Foreground="Gray" />
                     </Button>
-                </StackPanel>
-                <TextBlock VerticalAlignment="Center" Padding="8" FontSize="18" Text="DirectX + WPF Demo"></TextBlock>
+                    <TextBlock Text="DirectX + WPF Demo" VerticalAlignment="Center" Padding="8" FontSize="18" />
+                </DockPanel>
+            </StackPanel>
+
+            <DockPanel DockPanel.Dock="Left" Width="200" Background="WhiteSmoke" HorizontalAlignment="Left">
+                <UniformGrid Columns="2" DockPanel.Dock="Bottom">
+                    <Button Style="{StaticResource MyButton}" Command="{Binding RemoveDeviceCommand}">Удалить</Button>
+                    <Button Style="{StaticResource MyButton}" Command="{Binding CreateDeviceCommand}">Создать</Button>
+                </UniformGrid>
+                <ScrollViewer>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource myHeader}" Text="BACKBUFFER WIDTH" />
+                        <TextBox Style="{StaticResource myTextBox}" Text="{Binding BackBufferWidth, Source={StaticResource presentParameters}}" />
+
+                        <TextBlock Style="{StaticResource myHeader}" Text="BACKBUFFER HEIGHT" />
+                        <TextBox Style="{StaticResource myTextBox}" Text="{Binding BackBufferHeight, Source={StaticResource presentParameters}}" />
+
+                        <TextBlock Style="{StaticResource myHeader}" Text="BACKBUFFER FORMAT" />
+                        <ComboBox  Margin="8" SelectedItem="{Binding BackBufferFormat, Source={StaticResource presentParameters}}"
+                                  ItemsSource="{Binding Source={StaticResource dataFromEnum}}" />
+
+                        <TextBlock Style="{StaticResource myHeader}" Text="MULTISAMPLE TYPE" />
+                        <ComboBox  Margin="8" SelectedItem="{Binding MultiSampleType, Source={StaticResource presentParameters}}"
+                                  ItemsSource="{Binding Source={StaticResource multisampleEnum}}" />
+                    </StackPanel>
+                </ScrollViewer>
             </DockPanel>
 
-            <Image x:Name="imgelt" Width="300" Height="300">
-                <Image.Source>
-                    <i:D3DImage x:Name="d3dimg" />
-                </Image.Source>
-            </Image>
+            <DockPanel DockPanel.Dock="Right" Width="200" Background="WhiteSmoke" HorizontalAlignment="Left">
+                <ScrollViewer>
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource myHeader}" Text="BACKGROUND COLOR" />
+                        <xctk:ColorPicker Name="BackgroundColorPicker" Margin="8" SelectedColorChanged="ColorPicker_SelectedColorChanged" />
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+            <Image Margin="8" Source="{Binding DirectSurface, UpdateSourceTrigger=PropertyChanged}" />
         </DockPanel>
     </Border>
 </Window>
