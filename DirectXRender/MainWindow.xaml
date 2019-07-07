@@ -1,21 +1,22 @@
-﻿<Window x:Class="WpfApp1.MainWindow"
+﻿<Window x:Class="WpfDirectX.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp1"
         xmlns:sharpdx="clr-namespace:SharpDX.Direct3D9;assembly=SharpDX.Direct3D9"
-        xmlns:models="clr-namespace:WpfApp1.Models"
+        xmlns:models="clr-namespace:WpfDirectX.Models"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-        xmlns:i="clr-namespace:System.Windows.Interop;assembly=PresentationCore"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:System="clr-namespace:System;assembly=mscorlib"
+        xmlns:converters="clr-namespace:WpfApp1.Converters"
         mc:Ignorable="d"
-        Title="DirectX Wpf Demo" Height="500" Width="800" FontFamily="Segoe UI Light"
-        WindowStartupLocation="CenterScreen" ResizeMode="NoResize" WindowStyle="None"
-        AllowsTransparency="True" Background="Transparent" Topmost="True">
+        Title="DirectX Wpf Demo" Height="451" Width="700" FontFamily="Segoe UI Light"
+        Topmost="True">
 
     <Window.Resources>
+
+        <converters:QuaternionToVectorConverter x:Key="RotationConverter" />
 
         <models:DirectXComponent x:Key="presentParameters"
                                  BackBufferWidth="300"
@@ -52,15 +53,30 @@
             <Setter Property="FontSize" Value="12" />
             <Setter Property="Margin" Value="8 8 8 0" />
         </Style>
+
+        <Style TargetType="materialDesign:PackIcon">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Margin" Value="4" />
+            <Setter Property="Foreground" Value="Gray" />
+        </Style>
+
+        <ControlTemplate TargetType="GroupBox" x:Key="btTemplate">
+            <StackPanel Margin="4">
+                <TextBlock Text="{TemplateBinding Header}" FontSize="14" Padding="2" Margin="0" HorizontalAlignment="Stretch"
+                           Foreground="Gray" />
+                <ContentControl Content="{TemplateBinding Content}" />
+            </StackPanel>
+        </ControlTemplate>
     </Window.Resources>
 
-    <Border  Margin="8" Background="White">
+    <Border Background="White">
         <Border.Effect>
             <DropShadowEffect Color="#FF999999" BlurRadius="8" ShadowDepth="2" Direction="270" />
         </Border.Effect>
 
         <DockPanel Background="#333333">
-            <StackPanel DockPanel.Dock="Top" Background="White" MouseDown="StackPanel_MouseDown" Height="50">
+            <!--<StackPanel DockPanel.Dock="Top" Background="White" MouseDown="StackPanel_MouseDown" Height="50">
                 <Grid Background="#FB8122" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="3"></Grid>
                 <DockPanel>
                     <Button DockPanel.Dock="Right" Style="{StaticResource MyButton}" HorizontalAlignment="Right"
@@ -70,41 +86,76 @@
                     </Button>
                     <TextBlock Text="DirectX + WPF Demo" VerticalAlignment="Center" Padding="8" FontSize="18" />
                 </DockPanel>
-            </StackPanel>
+            </StackPanel>-->
 
-            <DockPanel DockPanel.Dock="Left" Width="200" Background="WhiteSmoke" HorizontalAlignment="Left">
-                <UniformGrid Columns="2" DockPanel.Dock="Bottom">
-                    <Button Style="{StaticResource MyButton}" Command="{Binding RemoveDeviceCommand}">Удалить</Button>
-                    <Button Style="{StaticResource MyButton}" Command="{Binding CreateDeviceCommand}">Создать</Button>
-                </UniformGrid>
-                <ScrollViewer>
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource myHeader}" Text="BACKBUFFER WIDTH" />
-                        <TextBox Style="{StaticResource myTextBox}" Text="{Binding BackBufferWidth, Source={StaticResource presentParameters}}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200" MinWidth="150" MaxWidth="250" />
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="200" MinWidth="200" MaxWidth="300" />
+                </Grid.ColumnDefinitions>
 
-                        <TextBlock Style="{StaticResource myHeader}" Text="BACKBUFFER HEIGHT" />
-                        <TextBox Style="{StaticResource myTextBox}" Text="{Binding BackBufferHeight, Source={StaticResource presentParameters}}" />
+                <DockPanel Grid.Column="0" DockPanel.Dock="Left"  Background="WhiteSmoke" HorizontalAlignment="Stretch">
+                    <UniformGrid Columns="2" DockPanel.Dock="Bottom">
+                        <Button Style="{StaticResource MyButton}" Command="{Binding RemoveDeviceCommand}">Remove</Button>
+                        <Button Style="{StaticResource MyButton}" Command="{Binding CreateDeviceCommand}">Create</Button>
+                    </UniformGrid>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource myHeader}" Text="BACKBUFFER WIDTH" />
+                            <TextBox Style="{StaticResource myTextBox}" Text="{Binding BackBufferWidth, Source={StaticResource presentParameters}}" />
 
-                        <TextBlock Style="{StaticResource myHeader}" Text="BACKBUFFER FORMAT" />
-                        <ComboBox  Margin="8" SelectedItem="{Binding BackBufferFormat, Source={StaticResource presentParameters}}"
+                            <TextBlock Style="{StaticResource myHeader}" Text="BACKBUFFER HEIGHT" />
+                            <TextBox Style="{StaticResource myTextBox}" Text="{Binding BackBufferHeight, Source={StaticResource presentParameters}}" />
+
+                            <TextBlock Style="{StaticResource myHeader}" Text="BACKBUFFER FORMAT" />
+                            <ComboBox  Margin="8" SelectedItem="{Binding BackBufferFormat, Source={StaticResource presentParameters}}"
                                   ItemsSource="{Binding Source={StaticResource dataFromEnum}}" />
 
-                        <TextBlock Style="{StaticResource myHeader}" Text="MULTISAMPLE TYPE" />
-                        <ComboBox  Margin="8" SelectedItem="{Binding MultiSampleType, Source={StaticResource presentParameters}}"
+                            <TextBlock Style="{StaticResource myHeader}" Text="MULTISAMPLE TYPE" />
+                            <ComboBox  Margin="8" SelectedItem="{Binding MultiSampleType, Source={StaticResource presentParameters}}"
                                   ItemsSource="{Binding Source={StaticResource multisampleEnum}}" />
-                    </StackPanel>
-                </ScrollViewer>
-            </DockPanel>
 
-            <DockPanel DockPanel.Dock="Right" Width="200" Background="WhiteSmoke" HorizontalAlignment="Left">
-                <ScrollViewer>
+                            <TextBlock Style="{StaticResource myHeader}" Text="BACKGROUND COLOR" />
+                            <xctk:ColorPicker Name="BackgroundColorPicker" Margin="8" SelectedColorChanged="ColorPicker_SelectedColorChanged" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+
+                <Image Grid.Column="1" Source="{Binding DirectSurface, UpdateSourceTrigger=PropertyChanged}" />
+
+                <ScrollViewer Grid.Column="2" Background="WhiteSmoke" HorizontalAlignment="Stretch" VerticalScrollBarVisibility ="Auto">
+
                     <StackPanel>
-                        <TextBlock Style="{StaticResource myHeader}" Text="BACKGROUND COLOR" />
-                        <xctk:ColorPicker Name="BackgroundColorPicker" Margin="8" SelectedColorChanged="ColorPicker_SelectedColorChanged" />
+                        <GroupBox Template="{StaticResource btTemplate}" Header="Name">
+                            <TextBox Name="objectName" />
+                        </GroupBox>
+
+                        <GroupBox Template="{StaticResource btTemplate}" Header="Transform">
+                            <StackPanel>
+                                <DockPanel>
+                                    <materialDesign:PackIcon DockPanel.Dock="Left" Kind="MoveResize" VerticalAlignment="Stretch" />
+                                    <local:VectorWpf DockPanel.Dock="Top" Value="{Binding ActivePrimitive.Transform.Position, Mode=TwoWay}" />
+                                </DockPanel>
+
+                                <DockPanel>
+                                    <materialDesign:PackIcon DockPanel.Dock="Left" Kind="Rotate90DegreesCcw" VerticalAlignment="Stretch" />
+                                    <local:VectorWpf DockPanel.Dock="Top"
+                                                     Value="{Binding ActivePrimitive.Transform.Rotation, Mode=TwoWay, Converter={StaticResource RotationConverter}}" />
+                                </DockPanel>
+
+                                <DockPanel>
+                                    <materialDesign:PackIcon DockPanel.Dock="Left" Kind="Resize" VerticalAlignment="Stretch" />
+                                    <local:VectorWpf DockPanel.Dock="Top" Value="{Binding ActivePrimitive.Transform.Scale, Mode=TwoWay}" />
+                                </DockPanel>
+                            </StackPanel>
+                        </GroupBox>
                     </StackPanel>
                 </ScrollViewer>
-            </DockPanel>
-            <Image Margin="8" Source="{Binding DirectSurface, UpdateSourceTrigger=PropertyChanged}" />
+
+                <GridSplitter Grid.Column="1" Width="3" HorizontalAlignment="Left"  Background="Gray" />
+                <GridSplitter Grid.Column="1" Width="3" HorizontalAlignment="Right" Background="Gray" />
+            </Grid>
         </DockPanel>
     </Border>
 </Window>

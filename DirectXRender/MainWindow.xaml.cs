@@ -7,9 +7,9 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
-using WpfApp1.ViewModels;
+using WpfDirectX.ViewModels;
 
-namespace WpfApp1
+namespace WpfDirectX
 {
     /// <summary>
     /// Логика взаимодействия для MainWindow.xaml
@@ -34,7 +34,8 @@ namespace WpfApp1
 
         private void ColorPicker_SelectedColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
         {
-            Context.BackgroundColor = BackgroundColorPicker.SelectedColor ?? Color.FromArgb(0, 0, 0, 0);
+            var color = BackgroundColorPicker.SelectedColor ?? Color.FromArgb(0, 0, 0, 0);
+            Context.BackgroundColor = new SharpDX.Color(color.R, color.G, color.B, color.A);
         }
     }
 }

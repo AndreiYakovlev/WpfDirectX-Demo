@@ -1,4 +1,5 @@
-﻿using SharpDX.Direct3D9;
+﻿using SharpDX;
+using SharpDX.Direct3D9;
 using SharpDX.Mathematics.Interop;
 using System;
 using System.Collections.Generic;
@@ -12,15 +13,15 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
-using WpfApp1.Models;
+using WpfDirectX.Models;
+using WpfDirectX.Primitives;
+using Box = WpfDirectX.Primitives.Box;
+using Matrix = SharpDX.Matrix;
 
-namespace WpfApp1.ViewModels
+namespace WpfDirectX.ViewModels
 {
     public class MainWindowViewModel : INotifyPropertyChanged
     {
-        [DllImport("DirectXNative.dll", CharSet = CharSet.Unicode)]
-        internal static extern IntPtr CreateHwnd();
-
         public event PropertyChangedEventHandler PropertyChanged;
 
         public void OnPropertyChanged([CallerMemberName]string prop = "")
@@ -29,6 +30,9 @@ namespace WpfApp1.ViewModels
                 PropertyChanged(this, new PropertyChangedEventArgs(prop));
         }
 
+        [DllImport("DirectXNative.dll", CharSet = CharSet.Unicode)]
+        internal static extern IntPtr CreateHwnd();
+
         private MainWindow _window;
         private Device device;
         private Surface renderTarget;
@@ -36,7 +40,19 @@ namespace WpfApp1.ViewModels
         private D3DImage _di;
         private ImageSource imageSource;
 
-        public Color BackgroundColor { get; set; }
+        private Primitive activePrimitive;
+
+        public Primitive ActivePrimitive
+        {
+            get => activePrimitive;
+            set
+            {
+                activePrimitive = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public SharpDX.Color BackgroundColor { get; set; }
 
         public ImageSource DirectSurface
         {
@@ -93,6 +109,9 @@ namespace WpfApp1.ViewModels
             CompositionTarget.Rendering -= OnRendering;
         }
 
+        [DllImport("Winmm.dll")]
+        private static extern int timeGetTime();
+
         private void OnRendering(object sender, EventArgs e)
         {
             // when WPF's composition target is about to render, we update our
@@ -102,10 +121,18 @@ namespace WpfApp1.ViewModels
                 // lock the D3DImage
                 _di.Lock();
 
-                device.Clear(ClearFlags.Target,
-                    new RawColorBGRA(BackgroundColor.B, BackgroundColor.G, BackgroundColor.R, BackgroundColor.A), 1.0f, 0);
+                device.Clear(ClearFlags.Target | ClearFlags.ZBuffer, BackgroundColor, 1.0f, 0);
                 device.BeginScene();
-                device.DrawPrimitives(PrimitiveType.TriangleList, 0, 1);
+
+                Matrix View = Matrix.LookAtLH(new Vector3(2, 2, -2), Vector3.Zero, Vector3.Up);
+                Matrix Proj = Matrix.PerspectiveFovLH(MathUtil.DegreesToRadians(60), 1, 0.1f, 100);
+
+                device.SetTransform(TransformState.View, View);
+                device.SetTransform(TransformState.Projection, Proj);
+
+                ActivePrimitive.Transform.Rotation = Quaternion.RotationAxis(Vector3.Up, MathUtil.DegreesToRadians(timeGetTime() / 10));
+                ActivePrimitive.DrawPrimitive(device);
+
                 device.EndScene();
 
                 // invalidate the updated region of the D3DImage (in this case, the whole image)
@@ -139,14 +166,16 @@ namespace WpfApp1.ViewModels
 
             return new PresentParameters()
             {
-                Windowed = true,
                 BackBufferFormat = component?.BackBufferFormat ?? Format.A8R8G8B8,
                 BackBufferWidth = component?.BackBufferWidth ?? 1,
                 BackBufferHeight = component?.BackBufferHeight ?? 1,
+                MultiSampleType = component?.MultiSampleType ?? MultisampleType.None,
+                Windowed = true,
                 BackBufferCount = 1,
                 SwapEffect = SwapEffect.Discard,
                 DeviceWindowHandle = hWnd,
-                MultiSampleType = component?.MultiSampleType ?? MultisampleType.None,
+                AutoDepthStencilFormat = Format.D24X8,
+                EnableAutoDepthStencil = true,
             };
         }
 
@@ -154,35 +183,6 @@ namespace WpfApp1.ViewModels
         {
             var texture = new Texture(device, width, height, 0, Usage.RenderTarget, surfaceFormat, Pool.Default);
             return texture.GetSurfaceLevel(0);
-        }
-
-        private void InitializeVertexDeclaration(Device device)
-        {
-            List<VertexElement> vertexElements = new List<VertexElement>();
-            vertexElements.Add(new VertexElement(0, 0, DeclarationType.Float4, DeclarationMethod.Default, DeclarationUsage.Position, 0));
-            vertexElements.Add(new VertexElement(0, 16, DeclarationType.Color, DeclarationMethod.Default, DeclarationUsage.Color, 0));
-            vertexElements.Add(VertexElement.VertexDeclarationEnd);
-
-            device.VertexDeclaration = new VertexDeclaration(device, vertexElements.ToArray());
-        }
-
-        private void InitializeTriangle(Device device)
-        {
-            List<VertexPositionColor> vertices = new List<VertexPositionColor>();
-            vertices.Add(new VertexPositionColor(new Vector4(-1f, 0f, 0), 0xFFFF0000));
-            vertices.Add(new VertexPositionColor(new Vector4(1f, 0f, 0), 0xFF00FF00));
-            vertices.Add(new VertexPositionColor(new Vector4(0f, 1f, 0), 0xFF0000FF));
-
-            int stride = 0;
-            unsafe
-            {
-                stride = sizeof(VertexPositionColor);
-            }
-
-            VertexBuffer vertexBuffer = new VertexBuffer(device, stride * vertices.Count, Usage.Dynamic, VertexFormat.None, Pool.Default);
-            vertexBuffer.Lock(0, 0, LockFlags.None).WriteRange(vertices.ToArray(), 0, vertices.Count);
-            vertexBuffer.Unlock();
-            device.SetStreamSource(0, vertexBuffer, 0, stride);
         }
 
         private Device CreateDevice(IntPtr hWnd, DeviceType deviceType)
@@ -265,8 +265,11 @@ namespace WpfApp1.ViewModels
                     return;
                 }
 
-                InitializeVertexDeclaration(device);
-                InitializeTriangle(device);
+                ActivePrimitive = new Box(device);
+                ActivePrimitive.Transform.Position = new Vector3(0.4f, 0.2f, 0.3f);
+
+                device.VertexDeclaration = new VertexDeclaration(device, Primitive.VertexElements);
+                device.SetStreamSource(0, ActivePrimitive, 0, Primitive.Stride);
 
                 DirectSurface = _di;
 

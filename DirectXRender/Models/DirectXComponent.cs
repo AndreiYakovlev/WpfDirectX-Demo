@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace WpfApp1.Models
+namespace WpfDirectX.Models
 {
     internal class DirectXComponent : DependencyObject
     {

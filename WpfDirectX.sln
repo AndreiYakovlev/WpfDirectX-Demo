@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DirectXNative", "DirectXNative\DirectXNative.vcxproj", "{B554F64D-BB59-4A31-A252-E983778BFD4B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DirectXRender", "DirectXRender\DirectXRender.csproj", "{A551BCE4-EF69-4995-9E10-8CAC3FF5A423}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B554F64D-BB59-4A31-A252-E983778BFD4B} = {B554F64D-BB59-4A31-A252-E983778BFD4B}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

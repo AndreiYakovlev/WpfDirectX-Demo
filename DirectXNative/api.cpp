@@ -9,7 +9,6 @@ DIRECTXAPI LPVOID CreateHwnd() {
 	WNDCLASS wndclass;
 
 	LPTSTR className = TEXT("Foo");
-
 	wndclass.style = CS_HREDRAW | CS_VREDRAW;
 	wndclass.lpfnWndProc = DefWindowProc;
 	wndclass.cbClsExtra = 0;
@@ -23,7 +22,9 @@ DIRECTXAPI LPVOID CreateHwnd() {
 
 	// create the device's window
 	RegisterClass(&wndclass);
-	HWND hWnd = CreateWindow(className, TEXT("D3DImageSample"), WS_OVERLAPPEDWINDOW,
+	HWND hWnd = CreateWindow(
+		className, TEXT("D3DImageSample"),
+		WS_OVERLAPPEDWINDOW, //Стиль окна
 		0, 0, 0, 0, NULL, NULL, NULL, NULL);
 
 	return hWnd;
